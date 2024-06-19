@@ -1,0 +1,46 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+
+
+df = pd.read_csv("/content/Churn_Modelling.csv")
+
+# Drop unnecessary columns (if needed)
+columns_to_drop = ['RowNumber', 'CustomerId', 'Surname']
+df = df.drop(columns=columns_to_drop)
+
+# Handle missing values (if any)
+df = df.dropna()
+
+# Encode categorical variables
+categorical_cols = ['Geography', 'Gender']
+
+for col in categorical_cols:
+    le = LabelEncoder()
+    df[col] = le.fit_transform(df[col])
+
+# Separate features and target variable
+X = df.drop(columns=['Exited'])
+y = df['Exited']
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train Random Forest model
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+
+# Evaluate the model
+y_pred = rf_model.predict(X_test)
+y_proba = rf_model.predict_proba(X_test)[:, 1]
+
+accuracy = accuracy_score(y_test, y_pred)
+confusionmatrix=confusion_matrix(y_test,y_pred)
+
+# Print the evaluation metrics
+print("Random Forest Metrics:")
+print("Accuracy: {:.4f}".format(accuracy))
+print("confusionmatrix")
+print(confusionmatrix)
