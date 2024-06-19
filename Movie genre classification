@@ -1,0 +1,60 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+
+# Load train and test data
+tr = "C:/Users/dell/Downloads/archive/Genre Classification Dataset/train_data.txt"
+train_data = pd.read_csv(tr, sep=':::', names=['title', 'genre', 'description'], engine='python')
+print(train_data.head())
+
+ts = "C:/Users/dell/Downloads/archive/Genre Classification Dataset/test_data.txt"
+test_data = pd.read_csv(ts, sep=':::', names=['title', 'description'], engine='python')
+print(test_data.head())
+
+# Visualize genre distribution
+classification = train_data['genre'].value_counts()
+print(classification)
+
+plt.figure(figsize=(12, 8))
+classification.plot(kind='bar', color='black')
+plt.title("Genre Distribution")
+plt.xlabel("Genre")
+plt.ylabel("Count")
+plt.xticks(rotation=65)
+plt.show()
+
+# Prepare the data for training and validation
+x_train_full = train_data['description']
+y_train_full = train_data['genre']
+
+x_train, x_val, y_train, y_val = train_test_split(x_train_full, y_train_full, test_size=0.2, random_state=42)
+
+# Prepare the test data
+x_test = test_data['description']
+
+# Convert text data to TF-IDF features
+tfidf = TfidfVectorizer()
+x_train_tfidf = tfidf.fit_transform(x_train)
+x_val_tfidf = tfidf.transform(x_val)
+x_test_tfidf = tfidf.transform(x_test)
+
+# Train the Multinomial Naive Bayes model
+nb = MultinomialNB()
+nb.fit(x_train_tfidf, y_train)
+
+# Evaluate the model
+y_val_pred = nb.predict(x_val_tfidf)
+val_accuracy = accuracy_score(y_val, y_val_pred)
+print(f"Validation Accuracy: {val_accuracy}")
+
+# Predict genres for the test data
+y_test_pred = nb.predict(x_test_tfidf)
+test_data['predicted_genre'] = y_test_pred
+print(test_data[['title', 'predicted_genre']].head())
+
+# Save the test predictions to a file (optional)
+test_data[['title', 'predicted_genre']].to_csv("test_predictions.csv", index=False)
